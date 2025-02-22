@@ -1,1 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调查问卷</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: white;
+            color: black;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            width: 80%;
+            text-align: center;
+        }
+        .question {
+            font-weight: bold;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+        .small-text {
+            font-size: 0.8em;
+            color: gray;
+            margin-bottom: 20px;
+        }
+        .button {
+            padding: 10px 20px;
+            margin: 10px 0;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .pink {
+            color: #ff00ff;
+            font-size: 1.2em;
+        }
+        .message {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+            background-color: transparent;
+            pointer-events: none;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-100px); }
+        }
+        .message div {
+            animation: floatUp 5s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="question" id="currentQuestion">你叫什么名字？</h1>
+        <p class="small-text">本次问卷的问题都要真实回答，如果说谎后果自负</p>
+        <input type="text" id="answerInput" placeholder="请输入你的回答" style="width: 100%; padding: 10px; box-sizing: border-box;">
+        <button class="button" id="nextButton">回答</button>
+        <button class="button" id="resetButton" style="margin-top: 20px;">重置</button>
+    </div>
 
+    <div class="message" id="messageContainer"></div>
+
+    <script>
+        let playerName = "";
+        let currentQuestionIndex = 0;
+
+        const questions = [
+            {
+                text: "你叫什么名字？",
+                next: 1
+            },
+            {
+                text: "{name}，请问你喜欢的食物是什么？",
+                next: 2
+            },
+            {
+                text: "最喜欢的动物是什么？",
+                next: 3
+            },
+            {
+                text: "把自己比喻成一种动物会是什么？",
+                next: 4
+            },
+            {
+                text: "你爱我吗？",
+                next: 5,
+                skipAnswer: true // 第五个问题跳过回答
+            },
+            {
+                text: "最不希望成为什么人？",
+                next: 6
+            },
+            {
+                text: "你喜欢的音乐类型是什么？",
+                next: 7
+            },
+            {
+                text: "说一个你最想超越限制的行为？",
+                next: 8
+            },
+            {
+                text: "你对我有没有好奇的事情？",
+                next: 9
+            },
+            {
+                text: "你会感到不安吗？",
+                next: 10
+            },
+            {
+                text: "你幸福吗？",
+                next: 11
+            },
+            {
+                text: "你是否经常填写来路不明的问卷？",
+                next: 12
+            },
+            {
+                text: "{name}，我好想你",
+                next: 13
+            },
+            {
+                text: "你认为我怎么样？",
+                next: 14
+            },
+            {
+                text: "你最喜欢的人是谁？",
+                condition: (answer) => answer.toLowerCase() === "林栩" || answer.toLowerCase() === "你",
+                next: 15
+            },
+            {
+                text: "我能来找你吗？",
+                next: 16
+            },
+            {
+                text: "你现在睡了吗？",
+                next: 17
+            },
+            {
+                text: "你是否曾因为厌恶别人而在网上玩失踪？(例如故意不回消息/假装手机没电)",
+                next: 18
+            },
+            {
+                text: "你为什么不回我消息？",
+                next: 19
+            },
+            {
+                text: "你是否确保家中门窗已经关紧？",
+                next: 20
+            },
+            {
+                text: "我也爱你",
+                next: 21
+            },
+            {
+                text: "<span class='pink'>永远在一起不要离开我，我爱你</span>",
+                repeat: true,
+                next: 22
+            },
+            {
+                text: "我们能在一起吗？",
+                condition: (answer) => answer.toLowerCase() === "能" || answer.toLowerCase() === "可以",
+                next: null
+            }
+        ];
+
+        const answerInput = document.getElementById('answerInput');
+        const nextButton = document.getElementById('nextButton');
+        const resetButton = document.getElementById('resetButton');
+        const currentQuestionElement = document.getElementById('currentQuestion');
+        const messageContainer = document.getElementById('messageContainer');
+
+        function showQuestion(index) {
+            const question = questions[index];
+            currentQuestionIndex = index;
+            currentQuestionElement.innerHTML = question.text.replace("{name}", playerName);
+            answerInput.value = "";
+            answerInput.focus();
+
+            if (question.skipAnswer) {
+                answerInput.disabled = true;
+                setTimeout(() => {
+                    nextButton.click();
+                }, 1000);
+            } else {
+                answerInput.disabled = false;
+            }
+        }
+
+        nextButton.addEventListener('click', () => {
+            const answer = answerInput.value.trim();
+            const currentQuestion = questions[currentQuestionIndex];
+
+            if (currentQuestionIndex === 0) {
+                playerName = answer;
+            }
+
+            if (currentQuestion.condition && !currentQuestion.condition(answer)) {
+                alert("这份问卷是为你写的，你知道该怎么回答！");
+                return;
+            }
+
+            if (currentQuestion.next !== null) {
+                showQuestion(currentQuestion.next);
+            } else {
+                const finalMessage = `
+                    <div class="pink">我好想你</div>
+                    <div class="pink">我来找你了</div>
+                    <div class="pink">我爱你</div>
+                    <div class="pink">${playerName}</div>
+                    <div class="pink">我爱你</div>
+                    <div class="pink">你永远无法摆脱我</div>
+                    <div class="pink">好想你</div>
+                    <div class="pink">为什么现在不能见</div>
+                    <div class="pink">开门</div>
+                    <div class="pink">我是真的爱你</div>
+                `;
+                messageContainer.innerHTML = finalMessage;
+            }
+        });
+
+        resetButton.addEventListener('click', () => {
+            playerName = "";
+            currentQuestionIndex = 0;
+            showQuestion(0);
+            messageContainer.innerHTML = "";
+        });
+
+        // 初始化第一个问题
+        showQuestion(0);
+    </script>
+</body>
+</html>
